@@ -57,13 +57,34 @@ class Apple:
 
 
 class GUI:
+    button_up = ((75, 650), (50, 700), (100, 700))
+    button_down = ((75, 800), (50, 750), (100, 750))
+    button_left = ((0, 725), (50, 700), (50, 750))
+    button_right = ((150, 725), (100, 700), (100, 750))
+
     def __init__(self):
         self.font_score = pygame.font.SysFont('Arial', 26, bold=True)
         self.font_end = pygame.font.SysFont('Arial', 66, bold=True)
 
+    def update(self, event_pos: tuple[int, int]):
+        global touch
+
+        print(event_pos)
+
+        touch['up'] = 50 <= event_pos[0] <= 100 and 650 <= event_pos[1] <= 700
+        touch['down'] = 50 <= event_pos[0] <= 100 and 750 <= event_pos[1] <= 800
+        touch['left'] = 0 <= event_pos[0] <= 50 and 700 <= event_pos[1] <= 750
+        touch['right'] = 100 <= event_pos[0] <= 150 and 700 <= event_pos[1] <= 750
+
     def draw(self, screen):
         render_score = self.font_score.render(f'SCORE: {score}', 1, pygame.Color('orange'))
         screen.blit(render_score, (5, 5))
+
+        pygame.draw.polygon(screen, pygame.Color('blue'), GUI.button_up)
+        pygame.draw.polygon(screen, pygame.Color('blue'), GUI.button_down)
+        pygame.draw.polygon(screen, pygame.Color('blue'), GUI.button_left)
+        pygame.draw.polygon(screen, pygame.Color('blue'), GUI.button_right)
+
 
     def draw_game_over(self, screen):
         render_end = self.font_end.render('GAME OVER', 1, pygame.Color('orange'))
@@ -88,6 +109,7 @@ dirs = {'W': True, 'S': True, 'A': True, 'D': True, }
 score = 0
 apple = Apple()
 snake = Snake()
+touch = {}
 
 screen = pygame.display.set_mode([RES, RES])
 clock = pygame.time.Clock()
@@ -105,26 +127,29 @@ async def main():
 
     while True:
         # Update
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type in (pygame.MOUSEBUTTONDOWN, pygame.FINGERDOWN, pygame.FINGERMOTION, pygame.FINGERUP):
+                gui.update(event.pos)
 
-        # snake movement
+        # snake movement keyboard
         key = pygame.key.get_pressed()
-        if key[pygame.K_w]:
+        if key[pygame.K_w] or touch.get('up'):
             if dirs['W']:
                 dx, dy = 0, -1
                 dirs = {'W': True, 'S': False, 'A': True, 'D': True, }
-        elif key[pygame.K_s]:
+        elif key[pygame.K_s] or touch.get('down'):
             if dirs['S']:
                 dx, dy = 0, 1
                 dirs = {'W': False, 'S': True, 'A': True, 'D': True, }
-        elif key[pygame.K_a]:
+        elif key[pygame.K_a] or touch.get('left'):
             if dirs['A']:
                 dx, dy = -1, 0
                 dirs = {'W': True, 'S': True, 'A': True, 'D': False, }
-        elif key[pygame.K_d]:
+        elif key[pygame.K_d] or touch.get('right'):
             if dirs['D']:
                 dx, dy = 1, 0
                 dirs = {'W': True, 'S': True, 'A': False, 'D': True, }
